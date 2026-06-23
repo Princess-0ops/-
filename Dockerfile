@@ -11,16 +11,17 @@ RUN apt-get update && apt-get install -y \
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    TZ=Asia/Amman
+    TZ=Asia/Amman \
+    PIP_NO_CACHE_DIR=1
 
 # Copy project files
-COPY pyproject.toml uv.lock ./
+COPY pyproject.toml uv.lock* ./
 COPY bot ./bot
 COPY main.py .
 
 # Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -e .
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install -e .
 
 # Create logs directory
 RUN mkdir -p logs
@@ -29,5 +30,5 @@ RUN mkdir -p logs
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import sys; sys.exit(0)" || exit 1
 
-# Run the application using aiogram (main.py)
+# Run the application using aiogram (main.py only)
 ENTRYPOINT ["python", "-u", "main.py"]
