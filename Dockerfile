@@ -1,1 +1,24 @@
-FROM yym68686/chatgpt:latest
+FROM python:3.11 AS builder
+WORKDIR /build
+
+# Copy project files
+COPY pyproject.toml uv.lock ./
+COPY . .
+
+# Install dependencies from pyproject via pip
+RUN pip install --upgrade pip \
+    && pip install . --no-cache-dir
+
+FROM python:3.11-slim-bookworm
+WORKDIR /home
+
+# Copy installed site-packages from builder
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+
+# Copy project files
+COPY . .
+
+EXPOSE 8000
+
+# Run the aiogram application (single entrypoint)
+ENTRYPOINT ["python", "-u", "/home/main.py"]

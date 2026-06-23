@@ -1,12 +1,24 @@
 FROM python:3.11 AS builder
+WORKDIR /build
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+# Copy project files
 COPY pyproject.toml uv.lock ./
-RUN uv pip install -r pyproject.toml --system --no-cache
+COPY . .
+
+# Install dependencies via pip (reads pyproject.toml)
+RUN pip install --upgrade pip \
+    && pip install . --no-cache-dir
 
 FROM python:3.11-slim-bookworm
-EXPOSE 8000
 WORKDIR /home
+
+# Copy installed site-packages from builder
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+
+# Copy project files
 COPY . .
-ENTRYPOINT ["python", "-u", "/home/bot.py"]
+
+EXPOSE 8000
+
+# Run the aiogram application (single entrypoint)
+ENTRYPOINT ["python", "-u", "/home/main.py"]

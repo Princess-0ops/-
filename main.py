@@ -115,6 +115,13 @@ async def main():
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
 
+    # Ensure any previously set webhook is removed to avoid telegram.error.Conflict
+    try:
+        await bot.delete_webhook(drop_pending_updates=True)
+        logger.info("✅ Webhook deleted (if existed). Continuing with polling mode.")
+    except Exception as e:
+        logger.warning(f"Webhook cleanup failed: {e}")
+
     storage = MemoryStorage()
     dp = Dispatcher(storage=storage)
 
